@@ -10,7 +10,7 @@ let nextId = tasks.length + 1;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Check the task fields before the POST or PUT handler runs.
+// Check the task fields before creating or updating a task.
 function validateTask(req, res, next) {
     // Read the task sent in the request body.
     const task = req.body;
@@ -106,7 +106,7 @@ app.get('/tasks/:id', (req, res) => {
 });
 
 // Validate the request and update an existing task.
-app.put('/tasks/:id', validateTask, (req, res) => {
+app.put('/tasks/:id', (req, res) => {
     // Read the task ID from the URL.
     const taskId = Number(req.params.id);
 
@@ -118,12 +118,15 @@ app.put('/tasks/:id', validateTask, (req, res) => {
     // Find the task that needs to be updated.
     for (let i = 0; i < tasks.length; i++) {
         if (tasks[i].id === taskId) {
-            // Replace the editable fields while keeping the original ID.
-            tasks[i].title = req.body.title.trim();
-            tasks[i].description = req.body.description.trim();
-            tasks[i].completed = req.body.completed;
-            // Return the updated task.
-            return res.json(tasks[i]);
+            // Validate the body only after finding the task.
+            return validateTask(req, res, () => {
+                // Replace the editable fields while keeping the original ID.
+                tasks[i].title = req.body.title.trim();
+                tasks[i].description = req.body.description.trim();
+                tasks[i].completed = req.body.completed;
+                // Return the updated task.
+                return res.json(tasks[i]);
+            });
         }
     }
 
